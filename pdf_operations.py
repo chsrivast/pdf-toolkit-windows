@@ -86,3 +86,71 @@ def simple_edit_text(pdf_path, output_path, old_text, new_text):
         return True, "Text edited successfully."
     except Exception as e:
         return False, f"Error: {str(e)}"
+
+def merge_pdfs(pdf_list, output_path):
+    try:
+        merged_doc = fitz.open()
+        for pdf in pdf_list:
+            with fitz.open(pdf) as doc:
+                merged_doc.insert_pdf(doc)
+        merged_doc.save(output_path)
+        merged_doc.close()
+        return True, "Successfully merged PDFs."
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+def compress_pdf(pdf_path, output_path):
+    try:
+        doc = fitz.open(pdf_path)
+        # garbage=4 cleans up unused objects; deflate=True compresses data streams
+        doc.save(output_path, garbage=4, deflate=True) 
+        doc.close()
+        return True, "Successfully compressed PDF."
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+def jpg_to_pdf(jpg_path, output_path):
+    try:
+        # PyMuPDF can open images and convert them to PDF bytes natively
+        img_doc = fitz.open(jpg_path)
+        pdf_bytes = img_doc.convert_to_pdf()
+        pdf_doc = fitz.open("pdf", pdf_bytes)
+        pdf_doc.save(output_path)
+        img_doc.close()
+        pdf_doc.close()
+        return True, "Successfully converted JPG to PDF."
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+def pdf_to_jpg(pdf_path, output_dir):
+    try:
+        doc = fitz.open(pdf_path)
+        base_name = os.path.splitext(os.path.basename(pdf_path))[0]
+        
+        for i, page in enumerate(doc):
+            pix = page.get_pixmap(dpi=150) # 150 DPI is a good balance of quality and size
+            output_file = os.path.join(output_dir, f"{base_name}_page_{i+1}.jpg")
+            pix.save(output_file)
+            
+        doc.close()
+        return True, f"Successfully extracted {len(doc)} JPGs."
+    except Exception as e:
+        return False, f"Error: {str(e)}"
+
+def unlock_pdf(pdf_path, output_path, password):
+    try:
+        doc = fitz.open(pdf_path)
+        if not doc.is_encrypted:
+            doc.close()
+            return False, "This PDF is not locked."
+            
+        if doc.authenticate(password):
+            # Saving an authenticated document removes the encryption
+            doc.save(output_path)
+            doc.close()
+            return True, "Successfully unlocked PDF."
+        else:
+            doc.close()
+            return False, "Incorrect password."
+    except Exception as e:
+        return False, f"Error: {str(e)}"
