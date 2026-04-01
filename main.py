@@ -2,6 +2,14 @@ import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import pdf_operations
 import os
+import sys
+
+# Reroute console outputs to a null device so libraries with progress 
+# bars (like docx2pdf) don't crash when built with --noconsole
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, 'w')
 
 # Set UI Theme
 ctk.set_appearance_mode("Dark")  
